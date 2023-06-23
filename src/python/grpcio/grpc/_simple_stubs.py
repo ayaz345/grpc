@@ -183,7 +183,6 @@ class ChannelCache:
                     channel,
                     datetime.datetime.now() + _EVICTION_PERIOD,
                 )
-                return channel
             else:
                 channel = _create_channel(
                     target, options, channel_credentials, compression
@@ -197,7 +196,8 @@ class ChannelCache:
                     or len(self._mapping) >= _MAXIMUM_CHANNELS
                 ):
                     self._condition.notify()
-                return channel
+
+            return channel
 
     def _test_only_channel_count(self) -> int:
         with self._lock:

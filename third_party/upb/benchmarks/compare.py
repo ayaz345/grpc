@@ -55,21 +55,19 @@ def Run(cmd):
 
 def Benchmark(outbase, bench_cpu=True, runs=12, fasttable=False):
   tmpfile = "/tmp/bench-output.json"
-  Run("rm -rf {}".format(tmpfile))
+  Run(f"rm -rf {tmpfile}")
   #Run("CC=clang bazel test ...")
-  if fasttable:
-    extra_args = " --//:fasttable_enabled=true"
-  else:
-    extra_args = ""
-
+  extra_args = " --//:fasttable_enabled=true" if fasttable else ""
   if bench_cpu:
-    Run("CC=clang bazel build -c opt --copt=-march=native benchmarks:benchmark" + extra_args)
-    Run("./bazel-bin/benchmarks/benchmark --benchmark_out_format=json --benchmark_out={} --benchmark_repetitions={} --benchmark_min_time=0.05 --benchmark_enable_random_interleaving=true".format(tmpfile, runs))
+    Run(f"CC=clang bazel build -c opt --copt=-march=native benchmarks:benchmark{extra_args}"
+        )
+    Run(f"./bazel-bin/benchmarks/benchmark --benchmark_out_format=json --benchmark_out={tmpfile} --benchmark_repetitions={runs} --benchmark_min_time=0.05 --benchmark_enable_random_interleaving=true"
+        )
     with open(tmpfile) as f:
       bench_json = json.load(f)
 
     # Translate into the format expected by benchstat.
-    txt_filename = outbase + ".txt"
+    txt_filename = f"{outbase}.txt"
     with open(txt_filename, "w") as f:
       for run in bench_json["benchmarks"]:
         if run["run_type"] == "aggregate":
@@ -79,11 +77,11 @@ def Benchmark(outbase, bench_cpu=True, runs=12, fasttable=False):
         name = re.sub(r'^BM_', 'Benchmark', name)
         values = (name, run["iterations"], run["cpu_time"])
         print("{} {} {} ns/op".format(*values), file=f)
-    Run("sort {} -o {} ".format(txt_filename, txt_filename))
+    Run(f"sort {txt_filename} -o {txt_filename} ")
 
   Run("CC=clang bazel build -c opt --copt=-g --copt=-march=native :conformance_upb"
       + extra_args)
-  Run("cp -f bazel-bin/conformance_upb {}.bin".format(outbase))
+  Run(f"cp -f bazel-bin/conformance_upb {outbase}.bin")
 
 
 baseline = "main"

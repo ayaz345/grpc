@@ -225,12 +225,14 @@ def _on_rpc_done(
     else:
         response = future.result()
         hostname = None
-        for metadatum in future.initial_metadata():
-            if metadatum[0] == "hostname":
-                hostname = metadatum[1]
-                break
-        else:
-            hostname = response.hostname
+        hostname = next(
+            (
+                metadatum[1]
+                for metadatum in future.initial_metadata()
+                if metadatum[0] == "hostname"
+            ),
+            response.hostname,
+        )
         if future.code() == grpc.StatusCode.OK:
             with _global_lock:
                 _global_rpcs_succeeded[method] += 1
@@ -400,7 +402,7 @@ class _MethodHandle:
     ):
         """Creates and starts a group of threads running the indicated method."""
         self._channel_threads = []
-        for i in range(num_channels):
+        for _ in range(num_channels):
             thread = threading.Thread(
                 target=_run_single_channel, args=(channel_config,)
             )
@@ -423,10 +425,7 @@ def _run(
     method_handles = []
     channel_configs = {}
     for method in _SUPPORTED_METHODS:
-        if method in methods:
-            qps = args.qps
-        else:
-            qps = 0
+        qps = args.qps if method in methods else 0
         channel_config = _ChannelConfiguration(
             method,
             per_method_metadata.get(method, []),
@@ -473,16 +472,14 @@ def parse_metadata_arg(metadata_arg: str) -> PerMethodMetadataType:
 def parse_rpc_arg(rpc_arg: str) -> Sequence[str]:
     methods = rpc_arg.split(",")
     if set(methods) - set(_SUPPORTED_METHODS):
-        raise ValueError(
-            "--rpc supported methods: {}".format(", ".join(_SUPPORTED_METHODS))
-        )
+        raise ValueError(f'--rpc supported methods: {", ".join(_SUPPORTED_METHODS)}')
     return methods
 
 
 def bool_arg(arg: str) -> bool:
-    if arg.lower() in ("true", "yes", "y"):
+    if arg.lower() in {"true", "yes", "y"}:
         return True
-    elif arg.lower() in ("false", "no", "n"):
+    elif arg.lower() in {"false", "no", "n"}:
         return False
     else:
         raise argparse.ArgumentTypeError(f"Could not parse '{arg}' as a bool.")
@@ -540,8 +537,10 @@ if __name__ == "__main__":
     parser.add_argument(
         "--log_file", default=None, type=str, help="A file to log to."
     )
-    rpc_help = "A comma-delimited list of RPC methods to run. Must be one of "
-    rpc_help += ", ".join(_SUPPORTED_METHODS)
+    rpc_help = (
+        "A comma-delimited list of RPC methods to run. Must be one of "
+        + ", ".join(_SUPPORTED_METHODS)
+    )
     rpc_help += "."
     parser.add_argument("--rpc", default="UnaryCall", type=str, help=rpc_help)
     metadata_help = (

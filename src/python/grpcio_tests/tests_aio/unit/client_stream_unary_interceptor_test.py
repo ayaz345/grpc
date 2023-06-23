@@ -52,8 +52,7 @@ class _StreamUnaryInterceptorWithRequestIterator(
         self, continuation, client_call_details, request_iterator
     ):
         self.request_iterator = CountingRequestIterator(request_iterator)
-        call = await continuation(client_call_details, self.request_iterator)
-        return call
+        return await continuation(client_call_details, self.request_iterator)
 
     def assert_in_final_state(self, test: unittest.TestCase):
         test.assertEqual(
@@ -433,11 +432,7 @@ class TestStreamUnaryClientInterceptor(AioTestBase):
     async def test_cancel_while_writing(self):
         # Test cancelation before making any write or after doing at least 1
         for num_writes_before_cancel in (0, 1):
-            with self.subTest(
-                name="Num writes before cancel: {}".format(
-                    num_writes_before_cancel
-                )
-            ):
+            with self.subTest(name=f"Num writes before cancel: {num_writes_before_cancel}"):
                 channel = aio.insecure_channel(
                     UNREACHABLE_TARGET,
                     interceptors=[_StreamUnaryInterceptorWithRequestIterator()],
@@ -469,6 +464,7 @@ class TestStreamUnaryClientInterceptor(AioTestBase):
                 await channel.close()
 
     async def test_cancel_by_the_interceptor(self):
+
         class Interceptor(aio.StreamUnaryClientInterceptor):
             async def intercept_stream_unary(
                 self, continuation, client_call_details, request_iterator
@@ -488,7 +484,7 @@ class TestStreamUnaryClientInterceptor(AioTestBase):
         call = stub.StreamingInputCall()
 
         with self.assertRaises(asyncio.InvalidStateError):
-            for i in range(_NUM_STREAM_REQUESTS):
+            for _ in range(_NUM_STREAM_REQUESTS):
                 await call.write(request)
 
         with self.assertRaises(asyncio.CancelledError):
@@ -501,6 +497,7 @@ class TestStreamUnaryClientInterceptor(AioTestBase):
         await channel.close()
 
     async def test_exception_raised_by_interceptor(self):
+
         class InterceptorException(Exception):
             pass
 
@@ -521,7 +518,7 @@ class TestStreamUnaryClientInterceptor(AioTestBase):
         call = stub.StreamingInputCall()
 
         with self.assertRaises(InterceptorException):
-            for i in range(_NUM_STREAM_REQUESTS):
+            for _ in range(_NUM_STREAM_REQUESTS):
                 await call.write(request)
 
         with self.assertRaises(InterceptorException):

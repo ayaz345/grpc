@@ -50,14 +50,16 @@ def _start_client(
     )
     return subprocess.Popen(
         (
-            _CLIENT_PATH,
-            desired_string,
-            "--server",
-            "localhost:{}".format(server_port),
-            "--ideal-distance",
-            str(ideal_distance),
+            (
+                _CLIENT_PATH,
+                desired_string,
+                "--server",
+                f"localhost:{server_port}",
+                "--ideal-distance",
+                str(ideal_distance),
+            )
+            + interesting_distance_args
         )
-        + interesting_distance_args
     )
 
 

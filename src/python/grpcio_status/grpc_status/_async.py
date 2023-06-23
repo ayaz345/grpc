@@ -41,8 +41,7 @@ async def from_call(call: aio.Call):
             rich_status = status_pb2.Status.FromString(value)
             if code.value[0] != rich_status.code:
                 raise ValueError(
-                    "Code in Status proto (%s) doesn't match status code (%s)"
-                    % (code_to_grpc_status_code(rich_status.code), code)
+                    f"Code in Status proto ({code_to_grpc_status_code(rich_status.code)}) doesn't match status code ({code})"
                 )
             if details != rich_status.message:
                 raise ValueError(

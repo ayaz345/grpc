@@ -32,14 +32,13 @@ class TestcaseRstStreamDuringData(object):
 
     def on_data_received(self, event):
         self._base_server.on_data_received_default(event)
-        sr = self._base_server.parse_received_data(event.stream_id)
-        if sr:
+        if sr := self._base_server.parse_received_data(event.stream_id):
             response_data = self._base_server.default_response_data(
                 sr.response_size
             )
             self._ready_to_send = True
             response_len = len(response_data)
-            truncated_response_data = response_data[0 : response_len / 2]
+            truncated_response_data = response_data[:response_len / 2]
             self._base_server.setup_send(
                 truncated_response_data, event.stream_id
             )

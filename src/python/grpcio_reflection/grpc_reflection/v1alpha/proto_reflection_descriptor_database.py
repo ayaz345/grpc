@@ -55,7 +55,7 @@ class ProtoReflectionDescriptorDatabase(DescriptorDatabase):
         self._logger = logging.getLogger(__name__)
         self._stub = ServerReflectionStub(channel)
         self._known_files: Set[str] = set()
-        self._cached_extension_numbers: Dict[str, List[int]] = dict()
+        self._cached_extension_numbers: Dict[str, List[int]] = {}
 
     def get_services(self) -> Iterable[str]:
         """
@@ -213,7 +213,7 @@ class ProtoReflectionDescriptorDatabase(DescriptorDatabase):
             error_code = res.error_response.error_code
             assert (
                 error_code == grpc.StatusCode.NOT_FOUND.value[0]
-            ), "unexpected error response: " + repr(res.error_response)
+            ), f"unexpected error response: {repr(res.error_response)}"
             raise KeyError(key)
         return res
 

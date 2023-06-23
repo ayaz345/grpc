@@ -60,9 +60,7 @@ class Greeter(helloworld_pb2_grpc.GreeterServicer):
 
         # Sending actual response.
         for i in range(3):
-            yield helloworld_pb2.HelloReply(
-                message="Hello %s times %s" % (request.name, i)
-            )
+            yield helloworld_pb2.HelloReply(message=f"Hello {request.name} times {i}")
 
 
 def serve():

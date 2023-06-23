@@ -73,46 +73,41 @@ weights = [item[1] for item in field_freqs]
 def choices(k):
   if sys.version_info >= (3, 6):
     return random.choices(population=population, weights=weights, k=k)
-  else:
-    print("WARNING: old Python version, field types are not properly weighted!")
-    return [random.choice(population) for _ in range(k)]
+  print("WARNING: old Python version, field types are not properly weighted!")
+  return [random.choice(population) for _ in range(k)]
 
-with open(base + "/100_msgs.proto", "w") as f:
+with open(f"{base}/100_msgs.proto", "w") as f:
   f.write('syntax = "proto3";\n')
   f.write('package upb_benchmark;\n')
   f.write('message Message {}\n')
   for i in range(2, 101):
     f.write('message Message{i} {{}}\n'.format(i=i))
 
-with open(base + "/200_msgs.proto", "w") as f:
+with open(f"{base}/200_msgs.proto", "w") as f:
   f.write('syntax = "proto3";\n')
   f.write('package upb_benchmark;\n')
   f.write('message Message {}\n')
   for i in range(2, 501):
     f.write('message Message{i} {{}}\n'.format(i=i))
 
-with open(base + "/100_fields.proto", "w") as f:
+with open(f"{base}/100_fields.proto", "w") as f:
   f.write('syntax = "proto2";\n')
   f.write('package upb_benchmark;\n')
   f.write('enum Enum { ZERO = 0; }\n')
   f.write('message Message {\n')
-  i = 1
   random.seed(a=0, version=2)
-  for field in choices(100):
+  for i, field in enumerate(choices(100), start=1):
     field_type, label = field
     f.write('  {label} {field_type} field{i} = {i};\n'.format(i=i, label=label, field_type=field_type))
-    i += 1
   f.write('}\n')
 
-with open(base + "/200_fields.proto", "w") as f:
+with open(f"{base}/200_fields.proto", "w") as f:
   f.write('syntax = "proto2";\n')
   f.write('package upb_benchmark;\n')
   f.write('enum Enum { ZERO = 0; }\n')
   f.write('message Message {\n')
-  i = 1
   random.seed(a=0, version=2)
-  for field in choices(200):
+  for i, field in enumerate(choices(200), start=1):
     field_type, label = field
     f.write('  {label} {field_type} field{i} = {i};\n'.format(i=i, label=label,field_type=field_type))
-    i += 1
   f.write('}\n')

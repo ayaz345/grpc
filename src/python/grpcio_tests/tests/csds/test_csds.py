@@ -68,7 +68,7 @@ class TestCsds(unittest.TestCase):
         grpc_csds.add_csds_servicer(self._server)
         self._server.start()
 
-        self._channel = grpc.insecure_channel("localhost:%s" % port)
+        self._channel = grpc.insecure_channel(f"localhost:{port}")
         self._stub = csds_pb2_grpc.ClientStatusDiscoveryServiceStub(
             self._channel
         )
@@ -120,7 +120,6 @@ class TestCsds(unittest.TestCase):
                             break
             except KeyError as e:
                 logging.debug("Invalid config: %s\n%s: %s", config, type(e), e)
-                pass
             if ok:
                 break
             time.sleep(1)

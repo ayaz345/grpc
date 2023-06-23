@@ -77,8 +77,8 @@ def _clean_elem(indict):
         if name not in indict:
             continue
         inlist = indict[name]
-        protos = list(x for x in inlist if os.path.splitext(x)[1] == ".proto")
-        others = set(x for x in inlist if x not in protos)
+        protos = [x for x in inlist if os.path.splitext(x)[1] == ".proto"]
+        others = {x for x in inlist if x not in protos}
         indict[name] = protos + sorted(others)
     return _rebuild_as_ordered_dict(indict, _ELEM_KEYS)
 
@@ -94,10 +94,7 @@ def cleaned_build_yaml_dict_as_string(indict):
             key=lambda x: (x.get("language", "_"), x["name"]),
         )
     output = yaml.dump(js, indent=2, width=80, default_flow_style=False)
-    # massage out trailing whitespace
-    lines = []
-    for line in output.splitlines():
-        lines.append(line.rstrip() + "\n")
+    lines = [line.rstrip() + "\n" for line in output.splitlines()]
     output = "".join(lines)
     return output
 
@@ -109,7 +106,7 @@ if __name__ == "__main__":
         output = cleaned_build_yaml_dict_as_string(js)
         if TEST:
             with open(filename) as f:
-                if not f.read() == output:
+                if f.read() != output:
                     raise Exception(
                         "Looks like build-cleaner.py has not been run for file"
                         ' "%s"?' % filename

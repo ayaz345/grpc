@@ -39,20 +39,17 @@ _GDB_TIMEOUT_S = 60
 
 
 def _channel(args):
-    target = "{}:{}".format(args["server_host"], args["server_port"])
-    if args["use_tls"]:
-        channel_credentials = grpc.ssl_channel_credentials()
-        channel = grpc.secure_channel(target, channel_credentials)
-    else:
-        channel = grpc.insecure_channel(target)
-    return channel
+    target = f'{args["server_host"]}:{args["server_port"]}'
+    if not args["use_tls"]:
+        return grpc.insecure_channel(target)
+    channel_credentials = grpc.ssl_channel_credentials()
+    return grpc.secure_channel(target, channel_credentials)
 
 
 def _validate_payload_type_and_length(response, expected_type, expected_length):
     if response.payload.type is not expected_type:
         raise ValueError(
-            "expected payload type %s, got %s"
-            % (expected_type, type(response.payload.type))
+            f"expected payload type {expected_type}, got {type(response.payload.type)}"
         )
     elif len(response.payload.body) != expected_length:
         raise ValueError(
@@ -145,7 +142,7 @@ class _ChildProcess(object):
             self._task(*self._args)
         except grpc.RpcError as rpc_error:
             traceback.print_exc()
-            self._exceptions.put("RpcError: %s" % rpc_error)
+            self._exceptions.put(f"RpcError: {rpc_error}")
         except Exception as e:  # pylint: disable=broad-except
             traceback.print_exc()
             self._exceptions.put(e)
@@ -157,7 +154,7 @@ class _ChildProcess(object):
             "-ex",
             "set confirm off",
             "-ex",
-            "attach {}".format(os.getpid()),
+            f"attach {os.getpid()}",
             "-ex",
             "set follow-fork-mode child",
             "-ex",
@@ -201,7 +198,7 @@ class _ChildProcess(object):
             "-ex",
             "echo attaching",
             "-ex",
-            "attach {}".format(self._child_pid),
+            f"attach {self._child_pid}",
             "-ex",
             "echo print_backtrace",
             "-ex",
@@ -222,17 +219,13 @@ class _ChildProcess(object):
         finally:
             for stream_name, stream in zip(("STDOUT", "STDERR"), streams):
                 stream.seek(0)
-                sys.stderr.write(
-                    "gdb {}:\n{}\n".format(
-                        stream_name, stream.read().decode("ascii")
-                    )
-                )
+                sys.stderr.write(f'gdb {stream_name}:\n{stream.read().decode("ascii")}\n')
                 stream.close()
             sys.stderr.flush()
 
     def finish(self):
         terminated = self.wait(_CHILD_FINISH_TIMEOUT_S)
-        sys.stderr.write("Exit code: {}\n".format(self._rc))
+        sys.stderr.write(f"Exit code: {self._rc}\n")
         if not terminated:
             self._print_backtraces()
             raise RuntimeError("Child process did not terminate")
@@ -240,10 +233,7 @@ class _ChildProcess(object):
             raise ValueError("Child process failed with exitcode %d" % self._rc)
         try:
             exception = self._exceptions.get(block=False)
-            raise ValueError(
-                'Child process failed: "%s": "%s"'
-                % (repr(exception), exception)
-            )
+            raise ValueError(f'Child process failed: "{repr(exception)}": "{exception}"')
         except queue.Empty:
             pass
 
@@ -443,13 +433,10 @@ def _in_progress_bidi_continue_call(channel):
         inherited_code = parent_bidi_call.code()
         inherited_details = parent_bidi_call.details()
         if inherited_code != grpc.StatusCode.CANCELLED:
-            raise ValueError(
-                "Expected inherited code CANCELLED, got %s" % inherited_code
-            )
+            raise ValueError(f"Expected inherited code CANCELLED, got {inherited_code}")
         if inherited_details != "Channel closed due to fork":
             raise ValueError(
-                "Expected inherited details Channel closed due to fork, got %s"
-                % inherited_details
+                f"Expected inherited details Channel closed due to fork, got {inherited_details}"
             )
 
     # Don't run child_target after closing the parent call, as the call may have
@@ -561,9 +548,7 @@ class TestCase(enum.Enum):
         elif self is TestCase.IN_PROGRESS_BIDI_NEW_CHANNEL_BLOCKING_CALL:
             _in_progress_bidi_new_channel_blocking_call(channel, args)
         else:
-            raise NotImplementedError(
-                'Test case "%s" not implemented!' % self.name
-            )
+            raise NotImplementedError(f'Test case "{self.name}" not implemented!')
         channel.close()
 
 

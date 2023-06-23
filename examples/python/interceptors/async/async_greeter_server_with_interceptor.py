@@ -63,7 +63,7 @@ class Greeter(helloworld_pb2_grpc.GreeterServicer):
         logging.info(
             "Handle rpc with id %s in server handler.", rpc_id_var.get()
         )
-        return helloworld_pb2.HelloReply(message="Hello, %s!" % request.name)
+        return helloworld_pb2.HelloReply(message=f"Hello, {request.name}!")
 
 
 async def serve() -> None:

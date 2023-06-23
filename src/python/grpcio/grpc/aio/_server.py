@@ -47,12 +47,11 @@ class Server(_base_server.Server):
     ):
         self._loop = cygrpc.get_working_loop()
         if interceptors:
-            invalid_interceptors = [
+            if invalid_interceptors := [
                 interceptor
                 for interceptor in interceptors
                 if not isinstance(interceptor, ServerInterceptor)
-            ]
-            if invalid_interceptors:
+            ]:
                 raise ValueError(
                     "Interceptor must be ServerInterceptor, the "
                     f"following are invalid: {invalid_interceptors}"

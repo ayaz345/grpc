@@ -40,12 +40,10 @@ def is_prime(n):
 def _get_server_address(server_stream):
     while True:
         server_stream.seek(0)
-        line = server_stream.readline()
-        while line:
+        while line := server_stream.readline():
             matches = re.search("Binding to '(.+)'", line)
             if matches is not None:
                 return matches.groups()[0]
-            line = server_stream.readline()
 
 
 class MultiprocessingExampleTest(unittest.TestCase):

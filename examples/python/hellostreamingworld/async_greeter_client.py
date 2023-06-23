@@ -42,9 +42,7 @@ async def run() -> None:
             response = await hello_stream.read()
             if response == grpc.aio.EOF:
                 break
-            print(
-                "Greeter client received from direct read: " + response.message
-            )
+            print(f"Greeter client received from direct read: {response.message}")
 
 
 if __name__ == "__main__":

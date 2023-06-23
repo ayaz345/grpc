@@ -43,7 +43,7 @@ _TEST_DIR = os.path.dirname(os.path.realpath(__file__))
 @contextlib.contextmanager
 def _system_path(path_insertion):
     old_system_path = sys.path[:]
-    sys.path = sys.path[0:1] + path_insertion + sys.path[1:]
+    sys.path = sys.path[:1] + path_insertion + sys.path[1:]
     yield
     sys.path = old_system_path
 
@@ -76,11 +76,10 @@ def _massage_proto_content(
     split_namespace_substituted = common_namespace_substituted.replace(
         _SPLIT_NAMESPACE, package_substitution
     )
-    message_import_replaced = split_namespace_substituted.replace(
+    return split_namespace_substituted.replace(
         _MESSAGES_IMPORT,
         b'import "' + messages_proto_relative_file_name_bytes + b'";',
     )
-    return message_import_replaced
 
 
 def _packagify(directory):
@@ -105,18 +104,11 @@ def _protoc(
     grpc_python_out,
     absolute_proto_file_names,
 ):
-    args = [
-        "",
-        "--proto_path={}".format(proto_path),
-    ]
+    args = ["", f"--proto_path={proto_path}"]
     if python_out is not None:
-        args.append("--python_out={}".format(python_out))
+        args.append(f"--python_out={python_out}")
     if grpc_python_out is not None:
-        args.append(
-            "--grpc_python_out={}:{}".format(
-                grpc_python_out_flag, grpc_python_out
-            )
-        )
+        args.append(f"--grpc_python_out={grpc_python_out_flag}:{grpc_python_out}")
     args.extend(absolute_proto_file_names)
     return protoc.main(args)
 
@@ -308,7 +300,7 @@ class _Test(unittest.TestCase, metaclass=abc.ABCMeta):
             )
             port = server.add_insecure_port("[::]:0")
             server.start()
-            channel = grpc.insecure_channel("localhost:{}".format(port))
+            channel = grpc.insecure_channel(f"localhost:{port}")
             stub = services_module.TestServiceStub(channel)
             response = stub.Call(self._messages_pb2.Request())
             self.assertEqual(self._messages_pb2.Response(), response)
@@ -316,13 +308,8 @@ class _Test(unittest.TestCase, metaclass=abc.ABCMeta):
 
 
 def _create_test_case_class(split_proto, protoc_style):
-    attributes = {}
-
-    name = "{}{}".format(
-        "SplitProto" if split_proto else "SameProto", protoc_style.name()
-    )
-    attributes["NAME"] = name
-
+    name = f'{"SplitProto" if split_proto else "SameProto"}{protoc_style.name()}'
+    attributes = {"NAME": name}
     if split_proto:
         attributes["MESSAGES_PROTO_RELATIVE_DIRECTORY_NAMES"] = (
             "split_messages",
@@ -351,7 +338,7 @@ def _create_test_case_class(split_proto, protoc_style):
 
     attributes["__module__"] = _Test.__module__
 
-    return type("{}Test".format(name), (_Test,), attributes)
+    return type(f"{name}Test", (_Test, ), attributes)
 
 
 def _create_test_case_classes():
@@ -373,9 +360,9 @@ class WellKnownTypesTest(unittest.TestCase):
         args = [
             "grpc_tools.protoc",
             "--proto_path=protos",
-            "--proto_path={}".format(well_known_protos_include),
-            "--python_out={}".format(out_dir),
-            "--grpc_python_out={}".format(out_dir),
+            f"--proto_path={well_known_protos_include}",
+            f"--python_out={out_dir}",
+            f"--grpc_python_out={out_dir}",
             "protos/invocation_testing/compiler.proto",
         ]
         rc = protoc.main(args)

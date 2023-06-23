@@ -67,8 +67,7 @@ class Amalgamator:
   def _process_file(self, infile_name, outfile):
     lines = open(infile_name).readlines()
 
-    has_copyright = lines[1].startswith(" * Copyright")
-    if has_copyright:
+    if has_copyright := lines[1].startswith(" * Copyright"):
       while not lines[0].startswith(" */"):
         lines.pop(0)
       lines.pop(0)
@@ -97,14 +96,13 @@ class Amalgamator:
     elif include in self.included:
       return True
     else:
-      # Include this upb header inline.
-      h_file = self._find_include_file(include)
-      if h_file:
+      if h_file := self._find_include_file(include):
         self.h_files.remove(h_file)
         self.included.add(include)
         self._process_file(h_file, self.output_h)
         return True
-      raise RuntimeError("Couldn't find include: " + include + ", h_files=" + repr(self.h_files))
+      raise RuntimeError(
+          f"Couldn't find include: {include}, h_files={repr(self.h_files)}")
 
 # ---- main ----
 

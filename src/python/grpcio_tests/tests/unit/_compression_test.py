@@ -143,7 +143,7 @@ class _MethodHandler(grpc.RpcMethodHandler):
             )
         elif not self.request_streaming and not self.response_streaming:
             self.unary_unary = _make_handle_unary_unary(pre_response_callback)
-        elif not self.request_streaming and self.response_streaming:
+        elif not self.request_streaming:
             self.unary_stream = _make_handle_unary_stream(pre_response_callback)
         else:
             self.stream_unary = _make_handle_stream_unary(pre_response_callback)
@@ -172,13 +172,11 @@ def _instrumented_client_server_pair(
 ):
     server = grpc.server(futures.ThreadPoolExecutor(), **server_kwargs)
     server.add_generic_rpc_handlers((server_handler,))
-    server_port = server.add_insecure_port("{}:0".format(_HOST))
+    server_port = server.add_insecure_port(f"{_HOST}:0")
     server.start()
     with _tcp_proxy.TcpProxy(_HOST, _HOST, server_port) as proxy:
         proxy_port = proxy.get_port()
-        with grpc.insecure_channel(
-            "{}:{}".format(_HOST, proxy_port), **channel_kwargs
-        ) as client_channel:
+        with grpc.insecure_channel(f"{_HOST}:{proxy_port}", **channel_kwargs) as client_channel:
             try:
                 yield client_channel, proxy, server
             finally:
@@ -240,9 +238,7 @@ def _unary_unary_client(channel, multicallable_kwargs, message):
     multi_callable = channel.unary_unary(_UNARY_UNARY)
     response = multi_callable(message, **multicallable_kwargs)
     if response != message:
-        raise RuntimeError(
-            "Request '{}' != Response '{}'".format(message, response)
-        )
+        raise RuntimeError(f"Request '{message}' != Response '{response}'")
 
 
 def _unary_stream_client(channel, multicallable_kwargs, message):
@@ -250,9 +246,7 @@ def _unary_stream_client(channel, multicallable_kwargs, message):
     response_iterator = multi_callable(message, **multicallable_kwargs)
     for response in response_iterator:
         if response != message:
-            raise RuntimeError(
-                "Request '{}' != Response '{}'".format(message, response)
-            )
+            raise RuntimeError(f"Request '{message}' != Response '{response}'")
 
 
 def _stream_unary_client(channel, multicallable_kwargs, message):
@@ -260,9 +254,7 @@ def _stream_unary_client(channel, multicallable_kwargs, message):
     requests = (_REQUEST for _ in range(_STREAM_LENGTH))
     response = multi_callable(requests, **multicallable_kwargs)
     if response != message:
-        raise RuntimeError(
-            "Request '{}' != Response '{}'".format(message, response)
-        )
+        raise RuntimeError(f"Request '{message}' != Response '{response}'")
 
 
 def _stream_stream_client(channel, multicallable_kwargs, message):
@@ -274,9 +266,7 @@ def _stream_stream_client(channel, multicallable_kwargs, message):
     response_iterator = multi_callable(requests, **multicallable_kwargs)
     for i, response in enumerate(response_iterator):
         if int(response.decode("ascii")) != i:
-            raise RuntimeError(
-                "Request '{}' != Response '{}'".format(i, response)
-            )
+            raise RuntimeError(f"Request '{i}' != Response '{response}'")
 
 
 class CompressionTest(unittest.TestCase):
@@ -284,14 +274,14 @@ class CompressionTest(unittest.TestCase):
         self.assertLess(
             compression_ratio,
             -1.0 * _COMPRESSION_RATIO_THRESHOLD,
-            msg="Actual compression ratio: {}".format(compression_ratio),
+            msg=f"Actual compression ratio: {compression_ratio}",
         )
 
     def assertNotCompressed(self, compression_ratio):
         self.assertGreaterEqual(
             compression_ratio,
             -1.0 * _COMPRESSION_RATIO_THRESHOLD,
-            msg="Actual compession ratio: {}".format(compression_ratio),
+            msg=f"Actual compession ratio: {compression_ratio}",
         )
 
     def assertConfigurationCompressed(
@@ -325,9 +315,9 @@ class CompressionTest(unittest.TestCase):
         client_function = None
         if not client_streaming and not server_streaming:
             client_function = _unary_unary_client
-        elif not client_streaming and server_streaming:
+        elif not client_streaming:
             client_function = _unary_stream_client
-        elif client_streaming and not server_streaming:
+        elif not server_streaming:
             client_function = _stream_unary_client
         else:
             client_function = _stream_stream_client
@@ -395,7 +385,7 @@ class CompressionTest(unittest.TestCase):
 
 
 def _get_compression_str(name, value):
-    return "{}{}".format(name, _COMPRESSION_NAMES[value])
+    return f"{name}{_COMPRESSION_NAMES[value]}"
 
 
 def _get_compression_test_name(
@@ -408,7 +398,7 @@ def _get_compression_test_name(
 ):
     client_arity = "Stream" if client_streaming else "Unary"
     server_arity = "Stream" if server_streaming else "Unary"
-    arity = "{}{}".format(client_arity, server_arity)
+    arity = f"{client_arity}{server_arity}"
     channel_compression_str = _get_compression_str(
         "Channel", channel_compression
     )
@@ -419,13 +409,7 @@ def _get_compression_test_name(
     server_call_compression_str = _get_compression_str(
         "ServerCall", server_call_compression
     )
-    return "test{}{}{}{}{}".format(
-        arity,
-        channel_compression_str,
-        multicallable_compression_str,
-        server_compression_str,
-        server_call_compression_str,
-    )
+    return f"test{arity}{channel_compression_str}{multicallable_compression_str}{server_compression_str}{server_call_compression_str}"
 
 
 def _test_options():

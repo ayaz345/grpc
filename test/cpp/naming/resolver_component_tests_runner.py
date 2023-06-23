@@ -57,12 +57,12 @@ if cur_resolver and cur_resolver != 'ares':
       'needs to use GRPC_DNS_RESOLVER=ares.'))
   test_runner_log('Exit 1 without running tests.')
   sys.exit(1)
-os.environ.update({'GRPC_TRACE': 'cares_resolver,cares_address_sorting'})
+os.environ['GRPC_TRACE'] = 'cares_resolver,cares_address_sorting'
 
 def wait_until_dns_server_is_up(args,
                                 dns_server_subprocess,
                                 dns_server_subprocess_output):
-  for i in range(0, 30):
+  for _ in range(0, 30):
     test_runner_log('Health check: attempt to connect to DNS server over TCP.')
     tcp_connect_subprocess = subprocess.Popen(python_args([
         args.tcp_connect_bin_path,

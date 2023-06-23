@@ -39,15 +39,10 @@ class TestDataFramePadding(object):
         ] = self.on_request_received
 
         # _total_updates maps stream ids to total flow control updates received
-        self._total_updates = {}
-        # zero window updates so far for connection window (stream id '0')
-        self._total_updates[0] = 0
+        self._total_updates = {0: 0}
         self._read_chunk_size = _SMALL_READ_CHUNK_SIZE
 
-        if use_padding:
-            self._pad_length = _LARGE_PADDING_LENGTH
-        else:
-            self._pad_length = None
+        self._pad_length = _LARGE_PADDING_LENGTH if use_padding else None
 
     def get_base_server(self):
         return self._base_server
@@ -85,14 +80,13 @@ class TestDataFramePadding(object):
 
     def on_request_received(self, event):
         self._base_server.on_request_received_default(event)
-        logging.info("on request received. Stream id: %s." % event.stream_id)
+        logging.info(f"on request received. Stream id: {event.stream_id}.")
         self._total_updates[event.stream_id] = 0
 
     # Log debug info and try to resume sending on all currently active streams.
     def on_window_update(self, event):
         logging.info(
-            "on window update. Stream id: %s. Delta: %s"
-            % (event.stream_id, event.delta)
+            f"on window update. Stream id: {event.stream_id}. Delta: {event.delta}"
         )
         self._total_updates[event.stream_id] += event.delta
         total = self._total_updates[event.stream_id]

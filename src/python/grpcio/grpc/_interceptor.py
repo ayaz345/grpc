@@ -768,12 +768,17 @@ def intercept_channel(
     ],
 ) -> grpc.Channel:
     for interceptor in reversed(list(interceptors)):
-        if (
-            not isinstance(interceptor, grpc.UnaryUnaryClientInterceptor)
-            and not isinstance(interceptor, grpc.UnaryStreamClientInterceptor)
-            and not isinstance(interceptor, grpc.StreamUnaryClientInterceptor)
-            and not isinstance(interceptor, grpc.StreamStreamClientInterceptor)
+        if isinstance(
+            interceptor,
+            (
+                grpc.UnaryUnaryClientInterceptor,
+                grpc.UnaryStreamClientInterceptor,
+                grpc.StreamUnaryClientInterceptor,
+                grpc.StreamStreamClientInterceptor,
+            ),
         ):
+            channel = _Channel(channel, interceptor)
+        else:
             raise TypeError(
                 "interceptor must be "
                 "grpc.UnaryUnaryClientInterceptor or "
@@ -781,5 +786,4 @@ def intercept_channel(
                 "grpc.StreamUnaryClientInterceptor or "
                 "grpc.StreamStreamClientInterceptor or "
             )
-        channel = _Channel(channel, interceptor)
     return channel

@@ -120,12 +120,12 @@ class TestMessageExtension(unittest.TestCase):
 
 class OversizeProtosTest(unittest.TestCase):
   def setUp(self):
-    msg = unittest_pb2.NestedTestAllTypes()
-    m = msg
-    for i in range(101):
-      m = m.child
-    m.Clear()
-    self.p_serialized = msg.SerializeToString()
+      msg = unittest_pb2.NestedTestAllTypes()
+      m = msg
+      for _ in range(101):
+          m = m.child
+      m.Clear()
+      self.p_serialized = msg.SerializeToString()
     
   def testAssertOversizeProto(self):
     from google.protobuf.pyext._message import SetAllowOversizeProtos

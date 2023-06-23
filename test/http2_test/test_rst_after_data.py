@@ -32,8 +32,7 @@ class TestcaseRstStreamAfterData(object):
 
     def on_data_received(self, event):
         self._base_server.on_data_received_default(event)
-        sr = self._base_server.parse_received_data(event.stream_id)
-        if sr:
+        if sr := self._base_server.parse_received_data(event.stream_id):
             response_data = self._base_server.default_response_data(
                 sr.response_size
             )

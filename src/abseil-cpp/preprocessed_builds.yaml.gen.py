@@ -46,7 +46,7 @@ def get_elem_value(elem, name):
                     nested_child.attrib.get("value") for nested_child in child
                 ]
             else:
-                raise "Cannot recognize tag: " + child.tag
+                raise f"Cannot recognize tag: {child.tag}"
     return None
 
 
@@ -79,7 +79,7 @@ def read_bazel_build(package):
     # to avoid bazel conflict when running on Kokoro.
     BAZEL_BIN = "../../tools/bazel"
     result = subprocess.check_output(
-        [BAZEL_BIN, "query", package + ":all", "--output", "xml"]
+        [BAZEL_BIN, "query", f"{package}:all", "--output", "xml"]
     )
     root = ET.fromstring(result)
     return [
@@ -95,7 +95,7 @@ def collect_bazel_rules(root_path):
     for cur, _, _ in os.walk(root_path):
         build_path = os.path.join(cur, "BUILD.bazel")
         if os.path.exists(build_path):
-            rules.extend(read_bazel_build("//" + cur))
+            rules.extend(read_bazel_build(f"//{cur}"))
     return rules
 
 
@@ -109,17 +109,16 @@ def parse_cmake_rule(rule, package):
     for line in lines[1:-1]:
         if CAPITAL_WORD.match(line.strip()):
             bucket = kv.setdefault(line.strip(), [])
+        elif bucket is None:
+            raise ValueError(f"Illegal syntax: {rule}")
         else:
-            if bucket is not None:
-                bucket.append(line.strip())
-            else:
-                raise ValueError("Illegal syntax: {}".format(rule))
+            bucket.append(line.strip())
     return Rule(
         type=lines[0].rstrip("("),
         name="absl::" + kv["NAME"][0],
         package=package,
-        srcs=[package + "/" + f.strip('"') for f in kv.get("SRCS", [])],
-        hdrs=[package + "/" + f.strip('"') for f in kv.get("HDRS", [])],
+        srcs=[f"{package}/" + f.strip('"') for f in kv.get("SRCS", [])],
+        hdrs=[f"{package}/" + f.strip('"') for f in kv.get("HDRS", [])],
         textual_hdrs=[],
         deps=kv.get("DEPS", []),
         visibility="PUBLIC" in kv,
@@ -173,11 +172,11 @@ def pairing_bazel_and_cmake_rules(bazel_rules, cmake_rules):
 
 
 def resolve_hdrs(files):
-    return [ABSEIL_PATH + "/" + f for f in files if f.endswith((".h", ".inc"))]
+    return [f"{ABSEIL_PATH}/{f}" for f in files if f.endswith((".h", ".inc"))]
 
 
 def resolve_srcs(files):
-    return [ABSEIL_PATH + "/" + f for f in files if f.endswith(".cc")]
+    return [f"{ABSEIL_PATH}/{f}" for f in files if f.endswith(".cc")]
 
 
 def resolve_deps(targets):
@@ -200,9 +199,9 @@ def generate_builds(root_path):
     )
     pair_map = pairing_bazel_and_cmake_rules(bazel_rules, cmake_rules)
     builds = []
-    for rule in sorted(bazel_rules, key=lambda r: r.package[2:] + ":" + r.name):
+    for rule in sorted(bazel_rules, key=lambda r: f"{r.package[2:]}:{r.name}"):
         p = {
-            "name": rule.package[2:] + ":" + rule.name,
+            "name": f"{rule.package[2:]}:{rule.name}",
             "cmake_target": pair_map.get((rule.package, rule.name)) or "",
             "headers": sorted(
                 resolve_hdrs(rule.srcs + rule.hdrs + rule.textual_hdrs)

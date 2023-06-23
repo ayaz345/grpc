@@ -99,7 +99,7 @@ def handle_stream_unary(request_iterator, servicer_context):
 
 
 def handle_stream_stream(request_iterator, servicer_context):
-    for request in request_iterator:
+    for _ in request_iterator:
         yield _RESPONSE
 
 
@@ -345,7 +345,7 @@ class ObservabilityTest(unittest.TestCase):
 
     def _set_config_file(self, config: Dict[str, Any]) -> None:
         # Using random name here so multiple tests can run with different config files.
-        config_file_path = "/tmp/" + str(random.randint(0, 100000))
+        config_file_path = f"/tmp/{random.randint(0, 100000)}"
         with open(config_file_path, "w", encoding="utf-8") as f:
             f.write(json.dumps(config))
         os.environ[CONFIG_FILE_ENV_VAR_NAME] = config_file_path
@@ -359,8 +359,6 @@ class ObservabilityTest(unittest.TestCase):
         with grpc.insecure_channel(f"localhost:{self._port}") as channel:
             multi_callable = channel.unary_stream(_UNARY_STREAM)
             call = multi_callable(_REQUEST)
-            for _ in call:
-                pass
 
     def stream_unary_call(self):
         with grpc.insecure_channel(f"localhost:{self._port}") as channel:
@@ -373,8 +371,6 @@ class ObservabilityTest(unittest.TestCase):
         with grpc.insecure_channel(f"localhost:{self._port}") as channel:
             multi_callable = channel.stream_stream(_STREAM_STREAM)
             call = multi_callable(iter([_REQUEST] * STREAM_LENGTH))
-            for _ in call:
-                pass
 
     def _start_server(self) -> None:
         self._server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
@@ -386,7 +382,7 @@ class ObservabilityTest(unittest.TestCase):
     def _validate_metrics(
         self, metrics: List[_observability.StatsData]
     ) -> None:
-        metric_names = set(metric.name for metric in metrics)
+        metric_names = {metric.name for metric in metrics}
         for name in _cyobservability.MetricsName:
             if name in _SKIP_VEFIRY:
                 continue
@@ -401,7 +397,7 @@ class ObservabilityTest(unittest.TestCase):
     def _validate_spans(
         self, tracing_data: List[_observability.TracingData]
     ) -> None:
-        span_names = set(data.name for data in tracing_data)
+        span_names = {data.name for data in tracing_data}
         for prefix in _SPAN_PREFIXS:
             prefix_exist = any(prefix in name for name in span_names)
             if not prefix_exist:

@@ -23,7 +23,7 @@ if os.path.isdir(out_dir):
 os.mkdir(out_dir)
 file_num = 1
 
-with open(out_filename, "wb") as out_file, open(in_filename, "rb") as in_file:
+with (open(out_filename, "wb") as out_file, open(in_filename, "rb") as in_file):
     for line in in_file:
         if line.startswith(b"```dot"):
             dot_lines = []
@@ -33,7 +33,7 @@ with open(out_filename, "wb") as out_file, open(in_filename, "rb") as in_file:
                     break
                 dot_lines.append(dot_line)
             dot_input = b"".join(dot_lines)
-            svg_filename = out_dir + "/" + str(file_num) + ".svg"
+            svg_filename = f"{out_dir}/{str(file_num)}.svg"
             svg = subprocess.check_output(['dot', '-Tsvg', '-o', svg_filename], input=dot_input)
             out_file.write(b"<div align=center>\n")
             out_file.write(b"<img src='%s'/>\n" % (svg_filename.encode('utf-8')))

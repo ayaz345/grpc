@@ -57,25 +57,25 @@ args = argp.parse_args()
 balancer_records = []
 grpclb_ips = args.grpclb_ips.split(",")
 if grpclb_ips[0]:
-    for ip in grpclb_ips:
-        balancer_records.append(
-            {
-                "TTL": "2100",
-                "data": ip,
-                "type": "A",
-            }
-        )
+    balancer_records.extend(
+        {
+            "TTL": "2100",
+            "data": ip,
+            "type": "A",
+        }
+        for ip in grpclb_ips
+    )
 fallback_records = []
 fallback_ips = args.fallback_ips.split(",")
 if fallback_ips[0]:
-    for ip in fallback_ips:
-        fallback_records.append(
-            {
-                "TTL": "2100",
-                "data": ip,
-                "type": "A",
-            }
-        )
+    fallback_records.extend(
+        {
+            "TTL": "2100",
+            "data": ip,
+            "type": "A",
+        }
+        for ip in fallback_ips
+    )
 records_config_yaml = {
     "resolver_tests_common_zone_name": "test.google.fr.",
     "resolver_component_tests": [

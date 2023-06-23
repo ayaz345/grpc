@@ -66,9 +66,9 @@ def serve():
         options=server_options,
     )
     helloworld_pb2_grpc.add_GreeterServicer_to_server(Greeter(), server)
-    server.add_insecure_port("[::]:" + port)
+    server.add_insecure_port(f"[::]:{port}")
     server.start()
-    print("Server started, listening on " + port)
+    print(f"Server started, listening on {port}")
     server.wait_for_termination()
 
 

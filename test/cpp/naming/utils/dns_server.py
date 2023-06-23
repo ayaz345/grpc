@@ -58,7 +58,7 @@ def start_local_dns_server(args):
 
     def _push_record(name, r):
         name = name.encode("ascii")
-        print("pushing record: |%s|" % name)
+        print(f"pushing record: |{name}|")
         if all_records.get(name) is not None:
             all_records[name].append(r)
             return
@@ -85,7 +85,7 @@ def start_local_dns_server(args):
                 r_type = record["type"]
                 r_data = record["data"]
                 r_ttl = int(record["TTL"])
-                record_full_name = "%s.%s" % (name, common_zone_name)
+                record_full_name = f"{name}.{common_zone_name}"
                 assert record_full_name[-1] == "."
                 record_full_name = record_full_name[:-1]
                 if r_type == "A":
@@ -101,9 +101,7 @@ def start_local_dns_server(args):
                     p = int(p)
                     w = int(w)
                     port = int(port)
-                    target_full_name = (
-                        "%s.%s" % (target, common_zone_name)
-                    ).encode("ascii")
+                    target_full_name = f"{target}.{common_zone_name}".encode("ascii")
                     _push_record(
                         record_full_name,
                         dns.Record_SRV(p, w, port, target_full_name, ttl=r_ttl),
@@ -132,7 +130,7 @@ def start_local_dns_server(args):
     dns_proto = twisted.names.dns.DNSDatagramProtocol(server)
     dns_proto.noisy = 2
     twisted.internet.reactor.listenUDP(args.port, dns_proto)
-    print("starting local dns server on 127.0.0.1:%s" % args.port)
+    print(f"starting local dns server on 127.0.0.1:{args.port}")
     print("starting twisted.internet.reactor")
     twisted.internet.reactor.suggestThreadPoolSize(1)
     twisted.internet.reactor.run()

@@ -30,11 +30,7 @@ def _dump_streams(name, streams):
     assert len(streams) == 2
     for stream_name, stream in zip(("STDOUT", "STDERR"), streams):
         stream.seek(0)
-        sys.stderr.write(
-            "{} {}:\n{}\n".format(
-                name, stream_name, stream.read().decode("ascii")
-            )
-        )
+        sys.stderr.write(f'{name} {stream_name}:\n{stream.read().decode("ascii")}\n')
         stream.close()
     sys.stderr.flush()
 
@@ -111,8 +107,7 @@ class ForkInteropTest(unittest.TestCase):
             timer.start()
             while cumulative_secs < _SUBPROCESS_TIMEOUT_S:
                 self._streams[0].seek(0)
-                s = self._streams[0].readline()
-                if s:
+                if s := self._streams[0].readline():
                     self._port = int(s)
                     break
                 time.sleep(interval_secs)
@@ -121,13 +116,9 @@ class ForkInteropTest(unittest.TestCase):
             if self._port is None:
                 # Timeout
                 self._streams[0].seek(0)
-                sys.stderr.write(
-                    "Server STDOUT:\n{}\n".format(self._streams[0].read())
-                )
+                sys.stderr.write(f"Server STDOUT:\n{self._streams[0].read()}\n")
                 self._streams[1].seek(0)
-                sys.stderr.write(
-                    "Server STDERR:\n{}\n".format(self._streams[1].read())
-                )
+                sys.stderr.write(f"Server STDERR:\n{self._streams[1].read()}\n")
                 sys.stderr.flush()
                 raise Exception("Failed to get port from server.")
         except ValueError:
@@ -189,7 +180,7 @@ class ForkInteropTest(unittest.TestCase):
             "-ex",
             "echo attaching",
             "-ex",
-            "attach {}".format(pid),
+            f"attach {pid}",
             "-ex",
             "echo print_backtrace",
             "-ex",

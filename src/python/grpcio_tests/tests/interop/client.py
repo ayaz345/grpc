@@ -140,26 +140,21 @@ def get_secure_channel_parameters(args):
             ),
         )
     if args.custom_credentials_type is not None:
-        if args.custom_credentials_type == "compute_engine_channel_creds":
-            assert call_credentials is None
-            google_credentials, unused_project_id = google_auth.default(
-                scopes=[args.oauth_scope]
+        if args.custom_credentials_type != "compute_engine_channel_creds":
+            raise ValueError(f"Unknown credentials type '{args.custom_credentials_type}'")
+        assert call_credentials is None
+        google_credentials, unused_project_id = google_auth.default(
+            scopes=[args.oauth_scope]
+        )
+        call_creds = grpc.metadata_call_credentials(
+            google_auth.transport.grpc.AuthMetadataPlugin(
+                credentials=google_credentials,
+                request=google_auth.transport.requests.Request(),
             )
-            call_creds = grpc.metadata_call_credentials(
-                google_auth.transport.grpc.AuthMetadataPlugin(
-                    credentials=google_credentials,
-                    request=google_auth.transport.requests.Request(),
-                )
-            )
-            channel_credentials = grpc.compute_engine_channel_credentials(
-                call_creds
-            )
-        else:
-            raise ValueError(
-                "Unknown credentials type '{}'".format(
-                    args.custom_credentials_type
-                )
-            )
+        )
+        channel_credentials = grpc.compute_engine_channel_credentials(
+            call_creds
+        )
     elif args.use_tls:
         if args.use_test_ca:
             root_certificates = resources.test_root_certificates()
@@ -186,7 +181,7 @@ def get_secure_channel_parameters(args):
 
 
 def _create_channel(args):
-    target = "{}:{}".format(args.server_host, args.server_port)
+    target = f"{args.server_host}:{args.server_port}"
 
     if (
         args.use_tls
@@ -211,7 +206,7 @@ def _test_case_from_arg(test_case_arg):
         if test_case_arg == test_case.value:
             return test_case
     else:
-        raise ValueError('No test case "%s"!' % test_case_arg)
+        raise ValueError(f'No test case "{test_case_arg}"!')
 
 
 def test_interoperability():

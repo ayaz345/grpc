@@ -74,10 +74,10 @@ def _read_protoc_arguments():
     _write_debug("\nread_protoc_arguments")
     result = []
     for arg in sys.argv[1:]:
-        _write_debug("  arg: " + arg)
+        _write_debug(f"  arg: {arg}")
         if arg.startswith("@"):
             # TODO(jtattermusch): inserting a "commented out" argument feels hacky
-            result.append("# RSP file: %s" % arg)
+            result.append(f"# RSP file: {arg}")
             rsp_file_name = arg[1:]
             result.extend(_read_rsp_file(rsp_file_name))
         else:
@@ -94,7 +94,7 @@ def _read_rsp_file(rspfile):
     with open(rspfile, "r") as rsp:
         for line in rsp:
             line = line.strip()
-            _write_debug("    line: " + line)
+            _write_debug(f"    line: {line}")
             result.append(line)
     return result
 
@@ -107,7 +107,7 @@ def _parse_protoc_arguments(protoc_args, projectdir):
     _write_debug("\nparse_protoc_arguments")
     arg_dict = {}
     for arg in protoc_args:
-        _write_debug("Parsing: %s" % arg)
+        _write_debug(f"Parsing: {arg}")
 
         # All arguments containing file or directory paths are
         # normalized by converting all '\' and changed to '/'
@@ -117,11 +117,7 @@ def _parse_protoc_arguments(protoc_args, projectdir):
             # msbuild integration uses, but it's not the only way.
             (name, value) = arg.split("=", 1)
 
-            if (
-                name == "--dependency_out"
-                or name == "--grpc_out"
-                or name == "--csharp_out"
-            ):
+            if name in ["--dependency_out", "--grpc_out", "--csharp_out"]:
                 # For args that contain a path, make the path absolute and normalize it
                 # to make it easier to assert equality in tests.
                 value = _normalized_absolute_path(value)
@@ -133,9 +129,7 @@ def _parse_protoc_arguments(protoc_args, projectdir):
 
             _add_protoc_arg_to_dict(arg_dict, name, value)
 
-        elif arg.startswith("#"):
-            pass  # ignore
-        else:
+        elif not arg.startswith("#"):
             # arg represents a proto file name
             arg = _normalized_relative_to_projectdir(arg, projectdir)
             _add_protoc_arg_to_dict(arg_dict, "protofile", arg)
@@ -180,15 +174,13 @@ def _write_or_update_results_json(log_dir, protofile, protoc_arg_dict):
     # Read existing json.
     # Since protoc may be called more than once each build/test if there is
     # more than one protoc file, we read the existing data to add to it.
-    fname = os.path.abspath("%s/results.json" % log_dir)
+    fname = os.path.abspath(f"{log_dir}/results.json")
     if os.path.isfile(fname):
         # Load the original contents.
         with open(fname, "r") as forig:
             results_json = json.load(forig)
     else:
-        results_json = {}
-        results_json["Files"] = {}
-
+        results_json = {"Files": {}}
     results_json["Files"][protofile] = protoc_arg_dict
     results_json["Metadata"] = {"timestamp": str(datetime.datetime.now())}
 
@@ -214,15 +206,14 @@ def _parse_generate_expected(generate_expected_str):
         pfile = _normalize_slashes(parts[0])
         csfiles = parts[1].split(";")
         result[pfile] = csfiles
-        _write_debug(pfile + " : " + str(csfiles))
+        _write_debug(f"{pfile} : {str(csfiles)}")
     return result
 
 
 def _get_cs_files_to_generate(protofile, proto_to_generated):
     """Returns list of .cs files to generated based on FAKEPROTOC_GENERATE_EXPECTED env."""
     protoname_normalized = _normalize_slashes(protofile)
-    cs_files_to_generate = proto_to_generated.get(protoname_normalized)
-    return cs_files_to_generate
+    return proto_to_generated.get(protoname_normalized)
 
 
 def _is_grpc_out_file(csfile):
@@ -239,16 +230,16 @@ def _generate_cs_files(
     _write_debug("\ngenerate_cs_files")
 
     if not cs_files_to_generate:
-        _write_debug("No .cs files matching proto file name %s" % protofile)
+        _write_debug(f"No .cs files matching proto file name {protofile}")
         return
 
     if not os.path.isabs(grpc_out_dir):
         # if not absolute, it is relative to project directory
-        grpc_out_dir = os.path.abspath("%s/%s" % (projectdir, grpc_out_dir))
+        grpc_out_dir = os.path.abspath(f"{projectdir}/{grpc_out_dir}")
 
     if not os.path.isabs(csharp_out_dir):
         # if not absolute, it is relative to project directory
-        csharp_out_dir = os.path.abspath("%s/%s" % (projectdir, csharp_out_dir))
+        csharp_out_dir = os.path.abspath(f"{projectdir}/{csharp_out_dir}")
 
     # Ensure directories exist
     if not os.path.isdir(grpc_out_dir):
@@ -260,12 +251,12 @@ def _generate_cs_files(
     timestamp = str(datetime.datetime.now())
     for csfile in cs_files_to_generate:
         if csfile.endswith("Grpc.cs"):
-            csfile_fullpath = "%s/%s" % (grpc_out_dir, csfile)
+            csfile_fullpath = f"{grpc_out_dir}/{csfile}"
         else:
-            csfile_fullpath = "%s/%s" % (csharp_out_dir, csfile)
-        _write_debug("Creating: %s" % csfile_fullpath)
+            csfile_fullpath = f"{csharp_out_dir}/{csfile}"
+        _write_debug(f"Creating: {csfile_fullpath}")
         with open(csfile_fullpath, "w") as fout:
-            print("// Generated by fake protoc: %s" % timestamp, file=fout)
+            print(f"// Generated by fake protoc: {timestamp}", file=fout)
 
 
 def _create_dependency_file(
@@ -283,10 +274,10 @@ def _create_dependency_file(
         return
 
     if not cs_files_to_generate:
-        _write_debug("No .cs files matching proto file name %s" % protofile)
+        _write_debug(f"No .cs files matching proto file name {protofile}")
         return
 
-    _write_debug("Creating dependency file: %s" % dependencyfile)
+    _write_debug(f"Creating dependency file: {dependencyfile}")
     with open(dependencyfile, "w") as out:
         nfiles = len(cs_files_to_generate)
         for i in range(0, nfiles):
@@ -296,7 +287,7 @@ def _create_dependency_file(
             else:
                 cs_filename = os.path.join(csharp_out_dir, csfile)
             if i == nfiles - 1:
-                print("%s: %s" % (cs_filename, protofile), file=out)
+                print(f"{cs_filename}: {protofile}", file=out)
             else:
                 print("%s \\" % cs_filename, file=out)
 
@@ -315,9 +306,7 @@ def _get_argument_last_occurrence_or_none(protoc_arg_dict, name):
     # If argument was passed multiple times, take the last occurrence.
     # If the value does not exist then return None
     values = protoc_arg_dict.get(name)
-    if values is not None:
-        return values[-1]
-    return None
+    return values[-1] if values is not None else None
 
 
 def main():
@@ -346,7 +335,7 @@ def main():
     log_dir = os.path.join(protoc_outdir, "log")
     if not os.path.isdir(log_dir):
         os.makedirs(log_dir)
-    _open_debug_log("%s/fakeprotoc_log.txt" % log_dir)
+    _open_debug_log(f"{log_dir}/fakeprotoc_log.txt")
 
     _write_debug(
         (

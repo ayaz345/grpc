@@ -46,9 +46,11 @@ import pkgutil
 def trace_callback(event, args):
     if event in ("switch", "throw"):
         origin, target = args
-        sys.stderr.write("{} Transfer from {} to {} with {}\n".format(datetime.datetime.now(), origin, target, event))
+        sys.stderr.write(
+            f"{datetime.datetime.now()} Transfer from {origin} to {target} with {event}\n"
+        )
     else:
-        sys.stderr.write("Unknown event {}.\n".format(event))
+        sys.stderr.write(f"Unknown event {event}.\n")
     sys.stderr.flush()
 
 if os.getenv("GREENLET_TRACE") is not None:
@@ -56,11 +58,12 @@ if os.getenv("GREENLET_TRACE") is not None:
 
 def debug(sig, frame):
     d={'_frame':frame}
-    d.update(frame.f_globals)
+    d |= frame.f_globals
     d.update(frame.f_locals)
 
     sys.stderr.write("Traceback:\n{}".format("\n".join(traceback.format_stack(frame))))
-    import gevent.util; gevent.util.print_run_info()
+    import gevent.util
+    gevent.util.print_run_info()
     sys.stderr.flush()
 
 signal.signal(signal.SIGTERM, debug)
@@ -76,7 +79,7 @@ class SingleLoader(object):
                 module = importer.find_module(module_name).load_module(module_name)
                 tests.append(loader.loadTestsFromModule(module))
         if len(tests) != 1:
-            raise AssertionError("Expected only 1 test module. Found {}".format(tests))
+            raise AssertionError(f"Expected only 1 test module. Found {tests}")
         self.suite.addTest(tests[0])
 
 

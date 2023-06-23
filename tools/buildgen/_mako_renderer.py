@@ -82,24 +82,7 @@ def main(argv: List[str]) -> None:
         sys.exit(2)
 
     for opt, arg in opts:
-        if opt == "-h":
-            out("Displaying showhelp")
-            showhelp()
-            sys.exit()
-        elif opt == "-o":
-            if got_output:
-                out("Got more than one output")
-                showhelp()
-                sys.exit(3)
-            got_output = True
-            output_name = arg
-        elif opt == "-m":
-            if module_directory is not None:
-                out("Got more than one cache directory")
-                showhelp()
-                sys.exit(4)
-            module_directory = arg
-        elif opt == "-M":
+        if opt == "-M":
             if output_merged is not None:
                 out("Got more than one output merged path")
                 showhelp()
@@ -107,11 +90,28 @@ def main(argv: List[str]) -> None:
             output_merged = arg
         elif opt == "-P":
             assert not got_preprocessed_input
-            assert json_dict == {}
+            assert not json_dict
             with open(arg, "rb") as dict_file:
                 dictionary = pickle.load(dict_file)
             got_preprocessed_input = True
 
+        elif opt == "-h":
+            out("Displaying showhelp")
+            showhelp()
+            sys.exit()
+        elif opt == "-m":
+            if module_directory is not None:
+                out("Got more than one cache directory")
+                showhelp()
+                sys.exit(4)
+            module_directory = arg
+        elif opt == "-o":
+            if got_output:
+                out("Got more than one output")
+                showhelp()
+                sys.exit(3)
+            got_output = True
+            output_name = arg
     cleared_dir = False
     for arg in args:
         got_input = True

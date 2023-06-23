@@ -86,9 +86,9 @@ def _GetFilePairs(config):
     # Generated files should always exist.  Blaze should guarantee this before
     # we are run.
     if not os.path.isfile(generated):
-      print("Generated file '%s' does not exist." % generated)
+      print(f"Generated file '{generated}' does not exist.")
       print("Please run this command to generate it:")
-      print("  bazel build %s:%s" % (config.package_name, config.target_name))
+      print(f"  bazel build {config.package_name}:{config.target_name}")
       sys.exit(1)
     ret.append(_FilePair(target, generated))
 
@@ -167,10 +167,8 @@ def CheckFilesMatch(config):
   file_pairs = _GetFilePairs(config)
   missing_files, stale_files = _GetMissingAndStaleFiles(file_pairs)
 
-  for pair in missing_files:
-    diff_errors.append("File %s does not exist" % pair.target)
-    continue
-
+  diff_errors.extend(f"File {pair.target} does not exist"
+                     for pair in missing_files)
   for pair in stale_files:
     with open(pair.generated) as g, open(pair.target) as t:
         diff = ''.join(difflib.unified_diff(g.read().splitlines(keepends=True),
@@ -178,8 +176,7 @@ def CheckFilesMatch(config):
         diff_errors.append("File %s is out of date:\n%s" % (pair.target, diff))
 
   if diff_errors:
-    error_msg = "Files out of date!\n\n"
-    error_msg += "To fix run THIS command:\n"
+    error_msg = "Files out of date!\n\n" + "To fix run THIS command:\n"
     error_msg += "  bazel-bin/%s/%s --fix\n\n" % (config.package_name,
                                                   config.target_name)
     error_msg += "Errors:\n"

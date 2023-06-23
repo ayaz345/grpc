@@ -43,15 +43,14 @@ def to_bunch(var: Any) -> Any:
     """Converts any kind of variable to a Bunch."""
     if isinstance(var, list):
         return [to_bunch(i) for i in var]
-    if isinstance(var, dict):
-        ret = {}
-        for k, v in list(var.items()):
-            if isinstance(v, (list, dict)):
-                v = to_bunch(v)
-            ret[k] = v
-        return Bunch(ret)
-    else:
+    if not isinstance(var, dict):
         return var
+    ret = {}
+    for k, v in list(var.items()):
+        if isinstance(v, (list, dict)):
+            v = to_bunch(v)
+        ret[k] = v
+    return Bunch(ret)
 
 
 def merge_json(dst: Union[Mapping, List], add: Union[Mapping, List]) -> None:

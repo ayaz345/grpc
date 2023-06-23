@@ -113,9 +113,7 @@ class TestAuthContext(AioTestBase):
             root_certificates=_TEST_ROOT_CERTIFICATES
         )
         channel = aio.secure_channel(
-            "localhost:{}".format(port),
-            channel_creds,
-            options=_PROPERTY_OPTIONS,
+            f"localhost:{port}", channel_creds, options=_PROPERTY_OPTIONS
         )
         response = await channel.unary_unary(_UNARY_UNARY)(_REQUEST)
         await channel.close()
@@ -158,9 +156,7 @@ class TestAuthContext(AioTestBase):
             certificate_chain=_CERTIFICATE_CHAIN,
         )
         channel = aio.secure_channel(
-            "localhost:{}".format(port),
-            channel_creds,
-            options=_PROPERTY_OPTIONS,
+            f"localhost:{port}", channel_creds, options=_PROPERTY_OPTIONS
         )
 
         response = await channel.unary_unary(_UNARY_UNARY)(_REQUEST)
@@ -180,7 +176,7 @@ class TestAuthContext(AioTestBase):
         self, channel_creds, channel_options, port, expect_ssl_session_reused
     ):
         channel = aio.secure_channel(
-            "localhost:{}".format(port), channel_creds, options=channel_options
+            f"localhost:{port}", channel_creds, options=channel_options
         )
         response = await channel.unary_unary(_UNARY_UNARY)(_REQUEST)
         auth_data = pickle.loads(response)

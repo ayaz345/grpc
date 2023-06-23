@@ -36,7 +36,7 @@ except IOError:
 
 
 def map_dir(filename):
-    return "third_party/boringssl-with-bazel/" + filename
+    return f"third_party/boringssl-with-bazel/{filename}"
 
 
 class Grpc(object):
@@ -96,7 +96,7 @@ class Grpc(object):
             ],
             "targets": [
                 {
-                    "name": "boringssl_%s" % test,
+                    "name": f"boringssl_{test}",
                     "build": "test",
                     "run": False,
                     "secure": False,
@@ -114,7 +114,7 @@ class Grpc(object):
             ],
             "tests": [
                 {
-                    "name": "boringssl_%s" % test,
+                    "name": f"boringssl_{test}",
                     "args": [],
                     "exclude_configs": ["asan", "ubsan"],
                     "ci_platforms": ["linux", "mac", "posix", "windows"],

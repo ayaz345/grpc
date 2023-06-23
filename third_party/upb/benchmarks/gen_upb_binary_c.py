@@ -32,10 +32,9 @@ include = sys.argv[1]
 msg_basename = sys.argv[2]
 count = 1
 
-m = re.search(r'(.*\D)(\d+)$', sys.argv[2])
-if m:
-  msg_basename = m.group(1)
-  count = int(m.group(2))
+if m := re.search(r'(.*\D)(\d+)$', sys.argv[2]):
+  msg_basename = m[1]
+  count = int(m[2])
 
 print('''
 #include "{include}"

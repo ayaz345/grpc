@@ -41,5 +41,5 @@ class GenericBenchmarkServer(
         return self._response
 
     def StreamingCall(self, request_iterator, context):
-        for request in request_iterator:
+        for _ in request_iterator:
             yield self._response

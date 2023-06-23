@@ -61,11 +61,10 @@ def client_streaming_method(stub):
     # create a generator
     def request_messages():
         for i in range(5):
-            request = demo_pb2.Request(
+            yield demo_pb2.Request(
                 client_id=CLIENT_ID,
                 request_data="called by Python client, message:%d" % i,
             )
-            yield request
 
     response = stub.ClientStreamingMethod(request_messages())
     print(
@@ -105,11 +104,10 @@ def bidirectional_streaming_method(stub):
     # create a generator
     def request_messages():
         for i in range(5):
-            request = demo_pb2.Request(
+            yield demo_pb2.Request(
                 client_id=CLIENT_ID,
                 request_data="called by Python client, message: %d" % i,
             )
-            yield request
             time.sleep(1)
 
     response_iterator = stub.BidirectionalStreamingMethod(request_messages())

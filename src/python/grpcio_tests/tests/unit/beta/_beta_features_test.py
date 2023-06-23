@@ -65,7 +65,6 @@ class _Servicer(object):
             self._serviced = True
             self._condition.notify_all()
             return
-            yield  # pylint: disable=unreachable
 
     def stream_unary(self, request_iterator, context):
         for request in request_iterator:
@@ -79,7 +78,7 @@ class _Servicer(object):
             return _RESPONSE
 
     def stream_stream(self, request_iterator, context):
-        for request in request_iterator:
+        for _ in request_iterator:
             with self._condition:
                 self._peer = context.protocol_context().peer()
                 context.protocol_context().disable_next_response_compression()

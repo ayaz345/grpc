@@ -110,17 +110,16 @@ class _ChannelReadyFuture(grpc.Future):
     def _update(self, connectivity: Optional[grpc.ChannelConnectivity]) -> None:
         with self._condition:
             if (
-                not self._cancelled
-                and connectivity is grpc.ChannelConnectivity.READY
+                self._cancelled
+                or connectivity is not grpc.ChannelConnectivity.READY
             ):
-                self._matured = True
-                self._channel.unsubscribe(self._update)
-                self._condition.notify_all()
-                done_callbacks = tuple(self._done_callbacks)
-                self._done_callbacks = None
-            else:
                 return
 
+            self._matured = True
+            self._channel.unsubscribe(self._update)
+            self._condition.notify_all()
+            done_callbacks = tuple(self._done_callbacks)
+            self._done_callbacks = None
         for done_callback in done_callbacks:
             try:
                 done_callback(self)
@@ -129,15 +128,14 @@ class _ChannelReadyFuture(grpc.Future):
 
     def cancel(self) -> bool:
         with self._condition:
-            if not self._matured:
-                self._cancelled = True
-                self._channel.unsubscribe(self._update)
-                self._condition.notify_all()
-                done_callbacks = tuple(self._done_callbacks)
-                self._done_callbacks = None
-            else:
+            if self._matured:
                 return False
 
+            self._cancelled = True
+            self._channel.unsubscribe(self._update)
+            self._condition.notify_all()
+            done_callbacks = tuple(self._done_callbacks)
+            self._done_callbacks = None
         for done_callback in done_callbacks:
             try:
                 done_callback(self)

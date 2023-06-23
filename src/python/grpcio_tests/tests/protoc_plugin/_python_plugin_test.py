@@ -88,9 +88,9 @@ class _ServicerMethods(object):
 
     def StreamingInputCall(self, request_iter, unused_rpc_context):
         response = response_pb2.StreamingInputCallResponse()
-        aggregated_payload_size = 0
-        for request in request_iter:
-            aggregated_payload_size += len(request.payload.payload_compressable)
+        aggregated_payload_size = sum(
+            len(request.payload.payload_compressable) for request in request_iter
+        )
         response.aggregated_payload_size = aggregated_payload_size
         self._control()
         return response
@@ -113,8 +113,7 @@ class _ServicerMethods(object):
                 response.payload.payload_compressable = "a" * parameter.size
                 self._control()
                 responses.append(response)
-        for response in responses:
-            yield response
+        yield from responses
 
 
 class _Service(
@@ -168,7 +167,7 @@ def _CreateService():
     )
     port = server.add_insecure_port("[::]:0")
     server.start()
-    channel = grpc.insecure_channel("localhost:{}".format(port))
+    channel = grpc.insecure_channel(f"localhost:{port}")
     stub = getattr(service_pb2_grpc, STUB_IDENTIFIER)(channel)
     return _Service(servicer_methods, server, stub)
 
@@ -190,7 +189,7 @@ def _CreateIncompleteService():
     )
     port = server.add_insecure_port("[::]:0")
     server.start()
-    channel = grpc.insecure_channel("localhost:{}".format(port))
+    channel = grpc.insecure_channel(f"localhost:{port}")
     stub = getattr(service_pb2_grpc, STUB_IDENTIFIER)(channel)
     return _Service(None, server, stub)
 
@@ -586,7 +585,7 @@ class SimpleStubsPluginTest(unittest.TestCase):
         )
         self._port = self._server.add_insecure_port("[::]:0")
         self._server.start()
-        self._target = "localhost:{}".format(self._port)
+        self._target = f"localhost:{self._port}"
 
     def tearDown(self):
         self._server.stop(None)

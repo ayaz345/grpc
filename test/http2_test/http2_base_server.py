@@ -31,14 +31,15 @@ class H2ProtocolBaseServer(twisted.internet.protocol.Protocol):
     def __init__(self):
         self._conn = h2.connection.H2Connection(client_side=False)
         self._recv_buffer = {}
-        self._handlers = {}
-        self._handlers["ConnectionMade"] = self.on_connection_made_default
-        self._handlers["DataReceived"] = self.on_data_received_default
-        self._handlers["WindowUpdated"] = self.on_window_update_default
-        self._handlers["RequestReceived"] = self.on_request_received_default
-        self._handlers["SendDone"] = self.on_send_done_default
-        self._handlers["ConnectionLost"] = self.on_connection_lost
-        self._handlers["PingAcknowledged"] = self.on_ping_acknowledged_default
+        self._handlers = {
+            "ConnectionMade": self.on_connection_made_default,
+            "DataReceived": self.on_data_received_default,
+            "WindowUpdated": self.on_window_update_default,
+            "RequestReceived": self.on_request_received_default,
+            "SendDone": self.on_send_done_default,
+            "ConnectionLost": self.on_connection_lost,
+            "PingAcknowledged": self.on_ping_acknowledged_default,
+        }
         self._stream_status = {}
         self._send_remaining = {}
         self._outstanding_pings = 0
@@ -59,7 +60,7 @@ class H2ProtocolBaseServer(twisted.internet.protocol.Protocol):
         self.transport.write(self._conn.data_to_send())
 
     def on_connection_lost(self, reason):
-        logging.info("Disconnected %s" % reason)
+        logging.info(f"Disconnected {reason}")
 
     def dataReceived(self, data):
         try:
@@ -228,12 +229,11 @@ class H2ProtocolBaseServer(twisted.internet.protocol.Protocol):
         sresp = messages_pb2.SimpleResponse()
         sresp.payload.body = b"\x00" * response_size
         serialized_resp_proto = sresp.SerializeToString()
-        response_data = (
+        return (
             b"\x00"
             + struct.pack("i", len(serialized_resp_proto))[::-1]
             + serialized_resp_proto
         )
-        return response_data
 
     def parse_received_data(self, stream_id):
         """returns a grpc framed string of bytes containing response proto of the size

@@ -77,9 +77,9 @@ class BuildFileFunctions(object):
     ]
     for file in files:
       if os.path.basename(file) in pregenerated_files:
-        found_files.append("../cmake/" + file)
+        found_files.append(f"../cmake/{file}")
       else:
-        found_files.append("../" + file)
+        found_files.append(f"../{file}")
 
     if list(filter(IsSourceFile, files)):
       # Has sources, make this a normal library.
@@ -224,7 +224,6 @@ class WorkspaceFileFunctions(object):
   def maybe(self, rule, **kwargs):
     if kwargs["name"] == "utf8_range":
       self.converter.utf8_range_commit = kwargs["commit"]
-    pass
 
   def http_archive(self, **kwargs):
     pass
@@ -384,9 +383,7 @@ data = {}
 converter = Converter()
 
 def GetDict(obj):
-  ret = {}
-  ret["UPB_DEFAULT_COPTS"] = []  # HACK
-  ret["UPB_DEFAULT_CPPOPTS"] = []  # HACK
+  ret = {"UPB_DEFAULT_COPTS": [], "UPB_DEFAULT_CPPOPTS": []}
   for k in dir(obj):
     if not k.startswith("_"):
       ret[k] = getattr(obj, k);

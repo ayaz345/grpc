@@ -83,7 +83,7 @@ class _ChannelServerPair(object):
 
 
 def _generate_channel_server_pairs(n):
-    return [_ChannelServerPair() for i in range(n)]
+    return [_ChannelServerPair() for _ in range(n)]
 
 
 def _close_channel_server_pairs(pairs):
@@ -120,9 +120,7 @@ class ChannelzServicerTest(unittest.TestCase):
             .channel.stream_stream(_SUCCESSFUL_STREAM_STREAM)
             .__call__(iter([_REQUEST] * test_constants.STREAM_LENGTH))
         )
-        cnt = 0
-        for _ in response_iterator:
-            cnt += 1
+        cnt = sum(1 for _ in response_iterator)
         self.assertEqual(cnt, test_constants.STREAM_LENGTH)
 
     def _get_channel_id(self, idx):
@@ -197,9 +195,9 @@ class ChannelzServicerTest(unittest.TestCase):
         self._pairs = _generate_channel_server_pairs(1)
         k_success = 7
         k_failed = 9
-        for i in range(k_success):
+        for _ in range(k_success):
             self._send_successful_unary_unary(0)
-        for i in range(k_failed):
+        for _ in range(k_failed):
             self._send_failed_unary_unary(0)
         resp = self._channelz_stub.GetChannel(
             channelz_pb2.GetChannelRequest(channel_id=self._get_channel_id(0))
@@ -221,10 +219,10 @@ class ChannelzServicerTest(unittest.TestCase):
         self._pairs = _generate_channel_server_pairs(k_channels)
         k_success = 11
         k_failed = 13
-        for i in range(k_success):
+        for _ in range(k_success):
             self._send_successful_unary_unary(0)
             self._send_successful_unary_unary(2)
-        for i in range(k_failed):
+        for _ in range(k_failed):
             self._send_failed_unary_unary(1)
             self._send_failed_unary_unary(2)
 
@@ -265,10 +263,10 @@ class ChannelzServicerTest(unittest.TestCase):
         self._pairs = _generate_channel_server_pairs(k_channels)
         k_success = 17
         k_failed = 19
-        for i in range(k_success):
+        for _ in range(k_success):
             self._send_successful_unary_unary(0)
             self._send_successful_unary_unary(2)
-        for i in range(k_failed):
+        for _ in range(k_failed):
             self._send_failed_unary_unary(1)
             self._send_failed_unary_unary(2)
 
@@ -330,9 +328,9 @@ class ChannelzServicerTest(unittest.TestCase):
         self._pairs = _generate_channel_server_pairs(1)
         k_success = 23
         k_failed = 29
-        for i in range(k_success):
+        for _ in range(k_success):
             self._send_successful_unary_unary(0)
-        for i in range(k_failed):
+        for _ in range(k_failed):
             self._send_failed_unary_unary(0)
 
         resp = self._channelz_stub.GetServers(
@@ -350,10 +348,10 @@ class ChannelzServicerTest(unittest.TestCase):
         self._pairs = _generate_channel_server_pairs(k_channels)
         k_success = 3
         k_failed = 5
-        for i in range(k_success):
+        for _ in range(k_success):
             self._send_successful_unary_unary(0)
             self._send_successful_unary_unary(2)
-        for i in range(k_failed):
+        for _ in range(k_failed):
             self._send_failed_unary_unary(1)
             self._send_failed_unary_unary(2)
 
@@ -404,14 +402,10 @@ class ChannelzServicerTest(unittest.TestCase):
 
             if gs_resp.socket.remote.HasField("tcpip_address"):
                 address = gs_resp.socket.remote.tcpip_address.ip_address
-                self.assertTrue(
-                    len(address) == 4 or len(address) == 16, address
-                )
+                self.assertTrue(len(address) in {4, 16}, address)
             if gs_resp.socket.local.HasField("tcpip_address"):
                 address = gs_resp.socket.local.tcpip_address.ip_address
-                self.assertTrue(
-                    len(address) == 4 or len(address) == 16, address
-                )
+                self.assertTrue(len(address) in {4, 16}, address)
 
     def test_streaming_rpc(self):
         self._pairs = _generate_channel_server_pairs(1)

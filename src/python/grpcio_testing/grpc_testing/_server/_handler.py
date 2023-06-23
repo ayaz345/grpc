@@ -73,17 +73,16 @@ class _Handler(Handler):
     def take_request(self):
         with self._condition:
             while True:
-                if self._code is None:
-                    if self._requests:
-                        request = self._requests.pop(0)
-                        self._condition.notify_all()
-                        return _common.ServerRpcRead(request, False, False)
-                    elif self._requests_closed:
-                        return _common.REQUESTS_CLOSED
-                    else:
-                        self._condition.wait()
-                else:
+                if self._code is not None:
                     return _common.TERMINATED
+                if self._requests:
+                    request = self._requests.pop(0)
+                    self._condition.notify_all()
+                    return _common.ServerRpcRead(request, False, False)
+                elif self._requests_closed:
+                    return _common.REQUESTS_CLOSED
+                else:
+                    self._condition.wait()
 
     def is_active(self):
         with self._condition:
@@ -114,15 +113,14 @@ class _Handler(Handler):
     def initial_metadata(self):
         with self._condition:
             while True:
-                if self._initial_metadata is None:
-                    if self._code is None:
-                        self._condition.wait()
-                    else:
-                        raise ValueError(
-                            "No initial metadata despite status code!"
-                        )
-                else:
+                if self._initial_metadata is not None:
                     return self._initial_metadata
+                if self._code is None:
+                    self._condition.wait()
+                else:
+                    raise ValueError(
+                        "No initial metadata despite status code!"
+                    )
 
     def add_request(self, request):
         with self._condition:

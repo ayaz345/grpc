@@ -45,17 +45,14 @@ async def _expect_status_code(
 ) -> None:
     code = await call.code()
     if code != expected_code:
-        raise ValueError(
-            "expected code %s, got %s" % (expected_code, await call.code())
-        )
+        raise ValueError(f"expected code {expected_code}, got {await call.code()}")
 
 
 async def _expect_status_details(call: aio.Call, expected_details: str) -> None:
     details = await call.details()
     if details != expected_details:
         raise ValueError(
-            "expected message %s, got %s"
-            % (expected_details, await call.details())
+            f"expected message {expected_details}, got {await call.details()}"
         )
 
 
@@ -75,8 +72,7 @@ def _validate_payload_type_and_length(
 ) -> None:
     if response.payload.type is not expected_type:
         raise ValueError(
-            "expected payload type %s, got %s"
-            % (expected_type, type(response.payload.type))
+            f"expected payload type {expected_type}, got {type(response.payload.type)}"
         )
     elif len(response.payload.body) != expected_length:
         raise ValueError(
@@ -108,7 +104,7 @@ async def _empty_unary(stub: test_pb2_grpc.TestServiceStub) -> None:
     response = await stub.EmptyCall(empty_pb2.Empty())
     if not isinstance(response, empty_pb2.Empty):
         raise TypeError(
-            'response is of type "%s", not empty_pb2.Empty!' % type(response)
+            f'response is of type "{type(response)}", not empty_pb2.Empty!'
         )
 
 
@@ -335,21 +331,13 @@ async def _custom_metadata(stub: test_pb2_grpc.TestServiceStub):
         initial_metadata = await call.initial_metadata()
         if initial_metadata[_INITIAL_METADATA_KEY] != initial_metadata_value:
             raise ValueError(
-                "expected initial metadata %s, got %s"
-                % (
-                    initial_metadata_value,
-                    initial_metadata[_INITIAL_METADATA_KEY],
-                )
+                f"expected initial metadata {initial_metadata_value}, got {initial_metadata[_INITIAL_METADATA_KEY]}"
             )
 
         trailing_metadata = await call.trailing_metadata()
         if trailing_metadata[_TRAILING_METADATA_KEY] != trailing_metadata_value:
             raise ValueError(
-                "expected trailing metadata %s, got %s"
-                % (
-                    trailing_metadata_value,
-                    trailing_metadata[_TRAILING_METADATA_KEY],
-                )
+                f"expected trailing metadata {trailing_metadata_value}, got {trailing_metadata[_TRAILING_METADATA_KEY]}"
             )
 
     # Testing with UnaryCall
@@ -379,8 +367,7 @@ async def _compute_engine_creds(
     response = await _large_unary_common_behavior(stub, True, True, None)
     if args.default_service_account != response.username:
         raise ValueError(
-            "expected username %s, got %s"
-            % (args.default_service_account, response.username)
+            f"expected username {args.default_service_account}, got {response.username}"
         )
 
 
@@ -391,14 +378,10 @@ async def _oauth2_auth_token(
     wanted_email = json.load(open(json_key_filename, "r"))["client_email"]
     response = await _large_unary_common_behavior(stub, True, True, None)
     if wanted_email != response.username:
-        raise ValueError(
-            "expected username %s, got %s" % (wanted_email, response.username)
-        )
+        raise ValueError(f"expected username {wanted_email}, got {response.username}")
     if args.oauth_scope.find(response.oauth_scope) == -1:
         raise ValueError(
-            'expected to find oauth scope "{}" in received "{}"'.format(
-                response.oauth_scope, args.oauth_scope
-            )
+            f'expected to find oauth scope "{response.oauth_scope}" in received "{args.oauth_scope}"'
         )
 
 
@@ -407,9 +390,7 @@ async def _jwt_token_creds(stub: test_pb2_grpc.TestServiceStub):
     wanted_email = json.load(open(json_key_filename, "r"))["client_email"]
     response = await _large_unary_common_behavior(stub, True, False, None)
     if wanted_email != response.username:
-        raise ValueError(
-            "expected username %s, got %s" % (wanted_email, response.username)
-        )
+        raise ValueError(f"expected username {wanted_email}, got {response.username}")
 
 
 async def _per_rpc_creds(
@@ -430,9 +411,7 @@ async def _per_rpc_creds(
         stub, True, False, call_credentials
     )
     if wanted_email != response.username:
-        raise ValueError(
-            "expected username %s, got %s" % (wanted_email, response.username)
-        )
+        raise ValueError(f"expected username {wanted_email}, got {response.username}")
 
 
 async def _special_status_message(stub: test_pb2_grpc.TestServiceStub):
@@ -507,14 +486,13 @@ async def test_interoperability(
     method = _TEST_CASE_IMPLEMENTATION_MAPPING.get(case)
     if method is None:
         raise NotImplementedError(f'Test case "{case}" not implemented!')
-    else:
-        num_params = len(inspect.signature(method).parameters)
-        if num_params == 1:
-            await method(stub)
-        elif num_params == 2:
-            if args is not None:
-                await method(stub, args)
-            else:
-                raise ValueError(f"Failed to run case [{case}]: args is None")
+    num_params = len(inspect.signature(method).parameters)
+    if num_params == 1:
+        await method(stub)
+    elif num_params == 2:
+        if args is None:
+            raise ValueError(f"Failed to run case [{case}]: args is None")
         else:
-            raise ValueError(f"Invalid number of parameters [{num_params}]")
+            await method(stub, args)
+    else:
+        raise ValueError(f"Invalid number of parameters [{num_params}]")

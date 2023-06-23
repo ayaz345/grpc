@@ -55,7 +55,7 @@ class H2Factory(twisted.internet.protocol.Factory):
         self._num_streams += 1
         logging.info("New Connection: %d" % self._num_streams)
         if not _TEST_CASE_MAPPING.has_key(self._testcase):
-            logging.error("Unknown test case: %s" % self._testcase)
+            logging.error(f"Unknown test case: {self._testcase}")
             assert 0
         else:
             t = _TEST_CASE_MAPPING[self._testcase]
@@ -94,7 +94,7 @@ def listen(endpoint, test_case):
         # with exit code 1.
         global _exit_code
         _exit_code = 1
-        logging.error("Listening failed: %s" % reason.value)
+        logging.error(f"Listening failed: {reason.value}")
         twisted.internet.reactor.stop()
 
     deferred.addErrback(listen_error)
@@ -103,8 +103,7 @@ def listen(endpoint, test_case):
 def start_test_servers(base_port):
     """Start one server per test case on incrementing port numbers
     beginning with base_port"""
-    index = 0
-    for test_case in sorted(_TEST_CASE_MAPPING.keys()):
+    for index, test_case in enumerate(sorted(_TEST_CASE_MAPPING.keys())):
         portnum = base_port + index
         logging.warning("serving on port %d : %s" % (portnum, test_case))
         endpoint = twisted.internet.endpoints.TCP4ServerEndpoint(
@@ -112,8 +111,6 @@ def start_test_servers(base_port):
         )
         # Wait until the reactor is running before calling endpoint.listen().
         twisted.internet.reactor.callWhenRunning(listen, endpoint, test_case)
-
-        index += 1
 
 
 if __name__ == "__main__":

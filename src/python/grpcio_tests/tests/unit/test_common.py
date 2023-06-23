@@ -92,7 +92,7 @@ def test_secure_channel(target, channel_credentials, server_host_override):
       An implementations.Channel to the remote host through which RPCs may be
         conducted.
     """
-    channel = grpc.secure_channel(
+    return grpc.secure_channel(
         target,
         channel_credentials,
         (
@@ -102,7 +102,6 @@ def test_secure_channel(target, channel_credentials, server_host_override):
             ),
         ),
     )
-    return channel
 
 
 def test_server(max_workers=10, reuse_port=False):

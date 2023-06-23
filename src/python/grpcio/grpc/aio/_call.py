@@ -294,21 +294,15 @@ class _UnaryResponseMixin(Call, Generic[ResponseType]):
                 self.cancel()
             raise
 
-        # NOTE(lidiz) If we raise RpcError in the task, and users doesn't
-        # 'await' on it. AsyncIO will log 'Task exception was never retrieved'.
-        # Instead, if we move the exception raising here, the spam stops.
-        # Unfortunately, there can only be one 'yield from' in '__await__'. So,
-        # we need to access the private instance variable.
-        if response is cygrpc.EOF:
-            if self._cython_call.is_locally_cancelled():
-                raise asyncio.CancelledError()
-            else:
-                raise _create_rpc_error(
-                    self._cython_call._initial_metadata,
-                    self._cython_call._status,
-                )
-        else:
+        if response is not cygrpc.EOF:
             return response
+        if self._cython_call.is_locally_cancelled():
+            raise asyncio.CancelledError()
+        else:
+            raise _create_rpc_error(
+                self._cython_call._initial_metadata,
+                self._cython_call._status,
+            )
 
 
 class _StreamResponseMixin(Call):
@@ -409,12 +403,11 @@ class _StreamRequestMixin(Call):
             raise cygrpc.UsageError(_API_STYLE_ERROR)
 
     def cancel(self) -> bool:
-        if super().cancel():
-            if self._async_request_poller is not None:
-                self._async_request_poller.cancel()
-            return True
-        else:
+        if not super().cancel():
             return False
+        if self._async_request_poller is not None:
+            self._async_request_poller.cancel()
+        return True
 
     def _metadata_sent_observer(self):
         self._metadata_sent.set()

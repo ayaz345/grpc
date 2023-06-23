@@ -156,26 +156,23 @@ class GCPOpenCensusObservability(grpc._observability.ObservabilityPlugin):
     def create_client_call_tracer(
         self, method_name: bytes
     ) -> ClientCallTracerCapsule:
-        current_span = execution_context.get_current_span()
-        if current_span:
+        if current_span := execution_context.get_current_span():
             # Propagate existing OC context
             trace_id = current_span.context_tracer.trace_id.encode("utf8")
             parent_span_id = current_span.span_id.encode("utf8")
-            capsule = _cyobservability.create_client_call_tracer(
+            return _cyobservability.create_client_call_tracer(
                 method_name, trace_id, parent_span_id
             )
         else:
             trace_id = span_context_module.generate_trace_id().encode("utf8")
-            capsule = _cyobservability.create_client_call_tracer(
+            return _cyobservability.create_client_call_tracer(
                 method_name, trace_id
             )
-        return capsule
 
     def create_server_call_tracer_factory(
         self,
     ) -> ServerCallTracerFactoryCapsule:
-        capsule = _cyobservability.create_server_call_tracer_factory_capsule()
-        return capsule
+        return _cyobservability.create_server_call_tracer_factory_capsule()
 
     def delete_client_call_tracer(
         self, client_call_tracer: ClientCallTracerCapsule
